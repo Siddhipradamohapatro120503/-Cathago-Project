@@ -1,0 +1,70 @@
+API Documentation v2.1
+Last Updated: February 15, 2025
+
+1. Authentication
+---------------
+Endpoint: /api/v2/auth
+Method: POST
+Headers:
+  - Content-Type: application/json
+  - Accept: application/json
+
+Request Body:
+{
+  "username": string,
+  "password": string,
+  "api_key": string
+}
+
+Response:
+{
+  "token": string,
+  "expires_in": number
+}
+
+2. Error Handling
+----------------
+Standard Error Codes:
+400 - Bad Request
+401 - Unauthorized
+403 - Forbidden
+404 - Not Found
+500 - Internal Server Error
+
+Error Response Format:
+{
+  "error": string,
+  "message": string,
+  "code": number
+}
+
+3. Rate Limiting
+---------------
+- 1000 requests per hour per API key
+- 429 Too Many Requests response when exceeded
+- Reset time included in X-RateLimit-Reset header
+
+4. Best Practices
+----------------
+- Use HTTPS for all requests
+- Implement exponential backoff
+- Cache responses when possible
+- Keep authentication tokens secure
+
+5. Example Implementation
+------------------------
+```python
+import requests
+
+def authenticate():
+    url = "https://api.example.com/v2/auth"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    data = {
+        "username": "user",
+        "api_key": "YOUR_API_KEY"
+    }
+    response = requests.post(url, json=data, headers=headers)
+    return response.json()
+```
