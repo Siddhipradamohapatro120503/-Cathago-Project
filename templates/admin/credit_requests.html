@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Credit Requests{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Credit Requests</h1>
+            <p class="text-gray-600">Manage user credit requests</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <select id="status-filter" class="input-field text-sm" onchange="filterRequests()">
+                <option value="all">All Requests</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Requests Table -->
+    <div class="card">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-left border-b border-gray-200">
+                        <th class="pb-3 text-sm font-medium text-gray-500">User</th>
+                        <th class="pb-3 text-sm font-medium text-gray-500">Amount</th>
+                        <th class="pb-3 text-sm font-medium text-gray-500">Request Date</th>
+                        <th class="pb-3 text-sm font-medium text-gray-500">Status</th>
+                        <th class="pb-3 text-sm font-medium text-gray-500">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in credit_requests %}
+                    <tr class="border-b border-gray-100" data-status="{{ request.status }}">
+                        <td class="py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span class="text-blue-600 font-medium">{{ request.user.username[0].upper() }}</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ request.user.username }}</p>
+                                    <p class="text-xs text-gray-600">Current Credits: {{ request.user.credits }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            <span class="font-medium text-gray-900">{{ request.amount }}</span>
+                            <span class="text-gray-600">credits</span>
+                        </td>
+                        <td class="py-4 text-gray-600">
+                            {{ request.request_date.strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                        <td class="py-4">
+                            <span class="badge {% if request.status == 'pending' %}badge-blue{% elif request.status == 'approved' %}badge-green{% else %}badge-red{% endif %}">
+                                {{ request.status|title }}
+                            </span>
+                        </td>
+                        <td class="py-4">
+                            {% if request.status == 'pending' %}
+                            <div class="flex items-center gap-2">
+                                <button onclick="handleRequest({{ request.id }}, 'approve')" class="btn-primary text-sm px-3 py-1">
+                                    Approve
+                                </button>
+                                <button onclick="handleRequest({{ request.id }}, 'deny')" class="btn-secondary text-sm px-3 py-1">
+                                    Deny
+                                </button>
+                            </div>
+                            {% else %}
+                            <span class="text-sm text-gray-500">No actions available</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function handleRequest(requestId, action) {
+    fetch(`/admin/credits/${requestId}/${action}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            showToast(data.message);
+            setTimeout(() => location.reload(), 1000);
+        }
+    })
+    .catch(() => showToast('Error processing request', 'error'));
+}
+
+function filterRequests() {
+    const status = document.getElementById('status-filter').value;
+    const rows = document.querySelectorAll('tr[data-status]');
+    
+    rows.forEach(row => {
+        if (status === 'all' || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
+        type === 'error' ? 'bg-red-500' : 'bg-green-500'
+    } text-white`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+</script>
+{% endblock %}

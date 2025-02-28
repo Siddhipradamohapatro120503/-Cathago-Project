@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Analytics{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+            <p class="text-gray-600">Monitor system usage and performance</p>
+        </div>
+        <div>
+            <button onclick="refreshAnalytics()" class="btn-secondary">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="card">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-2xl text-blue-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Total Users</h3>
+                    <p class="text-2xl font-bold text-blue-600">{{ analytics.total_users }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-alt text-2xl text-green-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Total Documents</h3>
+                    <p class="text-2xl font-bold text-green-600">{{ analytics.total_documents }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-search text-2xl text-purple-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Today's Scans</h3>
+                    <p class="text-2xl font-bold text-purple-600">{{ analytics.daily_scans.get(analytics.today, 0) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-coins text-2xl text-yellow-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Avg. Credits/User</h3>
+                    <p class="text-2xl font-bold text-yellow-600">{{ analytics.credit_stats.average|round(1) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Daily Scans Chart -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Scans</h3>
+            <canvas id="daily-scans-chart" height="300"></canvas>
+        </div>
+        <!-- User Activity Chart -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">User Activity</h3>
+            <canvas id="user-activity-chart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Topics and Users -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Popular Topics -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Popular Topics</h3>
+            <div class="space-y-3">
+                {% for topic, count in analytics.topic_distribution.items() %}
+                <div class="flex items-center">
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-900">{{ topic }}</span>
+                            <span class="text-sm text-gray-600">{{ count }} documents</span>
+                        </div>
+                        <div class="h-2 bg-gray-100 rounded-full">
+                            <div class="h-2 bg-blue-600 rounded-full" style="width: {{ (count / analytics.total_documents * 100)|round }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Top Users -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Users</h3>
+            <div class="space-y-4">
+                {% for user in analytics.top_users %}
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <span class="text-blue-600 font-medium">{{ user.username[0].upper() }}</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ user.username }}</p>
+                                <p class="text-xs text-gray-600">{{ user.documents|length }} documents</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-gray-900">{{ user.credits }} credits</p>
+                                <p class="text-xs text-gray-600">{{ user.last_scan|default('No scans yet', true) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Convert daily scans data for chart
+const dailyScansData = Object.entries({{ analytics.daily_scans|tojson|safe }})
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-30);  // Last 30 days
+
+const dailyScansChart = new Chart(
+    document.getElementById('daily-scans-chart').getContext('2d'),
+    {
+        type: 'line',
+        data: {
+            labels: dailyScansData.map(([date]) => {
+                const d = new Date(date);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }),
+            datasets: [{
+                label: 'Number of Scans',
+                data: dailyScansData.map(([, count]) => count),
+                borderColor: 'rgb(79, 70, 229)',
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    }
+);
+
+function refreshAnalytics() {
+    location.reload();
+}
+</script>
+{% endblock %}

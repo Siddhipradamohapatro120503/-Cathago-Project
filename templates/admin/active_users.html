@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Active Users{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Active Users</h1>
+            <p class="text-gray-600">Users active in the last 15 minutes</p>
+        </div>
+        <button onclick="location.reload()" class="btn-outline text-sm px-3 py-1 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+        </button>
+    </div>
+
+    <!-- Active Users Table -->
+    <div class="card">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="text-left border-b border-gray-200">
+                        <th class="pb-3 text-sm font-medium text-gray-500">User</th>
+                        <th class="pb-3 text-sm font-medium text-gray-500">Login Time</th>
+                        <th class="pb-3 text-sm font-medium text-gray-500">Last Activity</th>
+                        <th class="pb-3 text-sm font-medium text-gray-500">IP Address</th>
+                        <th class="pb-3 text-sm font-medium text-gray-500">Browser</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in active_sessions %}
+                    {% if session.user %}
+                    <tr class="border-b border-gray-100">
+                        <td class="py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span class="text-blue-600 font-medium">{{ session.user.username[0].upper() }}</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ session.user.username }}</p>
+                                    <p class="text-xs text-gray-600">{{ session.user.email }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 text-gray-600">
+                            {{ session.login_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </td>
+                        <td class="py-4">
+                            <span class="text-gray-900">{{ session.last_activity.strftime('%H:%M:%S') }}</span>
+                            <span class="text-xs text-gray-600">today</span>
+                        </td>
+                        <td class="py-4 text-gray-600">
+                            {{ session.ip_address or 'Unknown' }}
+                        </td>
+                        <td class="py-4 text-gray-600">
+                            {{ (session.user_agent or '').split(')')[0] + ')' if session.user_agent else 'Unknown' }}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    {% if not active_sessions %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-500">
+                            No active users in the last 15 minutes
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-refresh every 30 seconds -->
+<script>
+    setTimeout(() => location.reload(), 30000);
+</script>
+{% endblock %}
