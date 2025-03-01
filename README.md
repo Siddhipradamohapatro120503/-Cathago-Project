@@ -25,7 +25,7 @@ ScanSwift is a powerful document management system that helps users organize, an
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/scanswift.git
+   git clone https://github.com/Siddhipradamohapatro120503/-Cathago-Project.git
    cd scanswift
    ```
 
