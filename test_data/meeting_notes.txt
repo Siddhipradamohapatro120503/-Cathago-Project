@@ -3,6 +3,8 @@ Date: February 28, 2025
 Time: 10:00 AM - 11:30 AM
 Location: Conference Room A / Virtual
 
+Name: Siddhiprada
+
 Attendees:
 - Sarah Chen (Product Manager)
 - Mike Rodriguez (Lead Developer)
