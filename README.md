@@ -2,6 +2,9 @@
 
 ScanSwift is a powerful document management system that helps users organize, analyze, and search through their documents efficiently. It features AI-powered document similarity matching, topic extraction, and multi-user support.
 
+![Local Image](./media/Architecture Overview - visual selection.png)
+
+
 ## Features
 
 - **Document Management**
