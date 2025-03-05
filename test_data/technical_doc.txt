@@ -56,15 +56,3 @@ Error Response Format:
 ```python
 import requests
 
-def authenticate():
-    url = "https://api.example.com/v2/auth"
-    headers = {
-        "Content-Type": "application/json"
-    }
-    data = {
-        "username": "user",
-        "api_key": "YOUR_API_KEY"
-    }
-    response = requests.post(url, json=data, headers=headers)
-    return response.json()
-```
